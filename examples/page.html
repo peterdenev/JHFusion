@@ -1,0 +1,33 @@
+<html>
+<head>
+	<title>TodoMVC</title>
+	<script src="js/libs/jquery-1.8.2.min.js"></script>
+	
+	
+</head>
+<body>
+	
+		
+	<input type="text" id="new_task_in" data-models="val > new_todo_text" />
+	<input type="button" id="add_task_btn" value="add task" data-onclick="addItem"  />
+
+	<ul id="todo_ul" data-trigers="!, todos" data-handler="listTodos">	
+
+	</ul>
+
+	<script id="tmpl_1" type="text/themplate">
+		<%for(var key in this){%>
+			<li>
+				<input type="text" data-models="todos.<%key%>" value="<%this[key]%>" />	
+				<input type="button" data-models="" data-onclick="delEl(<%key%>)" value="delete" />
+			</li>
+		<%}%>			
+	</script>
+		
+
+	
+	<script src="js/libs/template_engine.js"></script>
+	<script src="../JHFusion.js"></script>
+	<script src="js/main.js"></script>
+</body>
+</html>

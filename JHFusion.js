@@ -17,6 +17,17 @@
         //'id': 'handelr'
     }
 
+    var is_controller = false;
+
+    var observeHandler = Object.observe || function(){};
+    var unobserveHandler = Object.unobserve || function(){};
+
+    var initFuncs = []
+
+    function setAttrPrx(new_pfx){
+        attr_pfx = new_pfx;
+    }
+
     function depObserve(scope, deps, renderHandler, handlerData, breakOnFirst){
         breakOnFirst = typeof breakOnFirst !== 'undefined' ? breakOnFirst : false; 
         var this_o_handler = function(changes){                           
@@ -28,7 +39,7 @@
                 }
             }
         }      
-        Object.observe(scope, this_o_handler);
+        observeHandler(scope, this_o_handler);
         return this_o_handler;
     }
 
@@ -78,14 +89,14 @@
         }
    }
 
-   function bindTrigers(scope, $html_el, this_bindedElementsHandlers){
+   function bindTriggers(scope, $html_el, this_bindedElementsHandlers){
         // JS change -> JS (function)
-        var to_triger_now = false;
-        var triggers = ($html_el.attr(attr_pfx+'trigers') || '').split(',').map(function(el){
+        var to_trigger_now = false;
+        var triggers = ($html_el.attr(attr_pfx+'triggers') || '').split(',').map(function(el){
             return el.trim();
         }).filter(function(el){
             if(el=='!'){
-                to_triger_now = true
+                to_trigger_now = true
                 return false;  
             }
             return true;
@@ -95,7 +106,14 @@
         if(handler){//loaders...
             var this_o_handler = depObserve( scope, triggers , handler, [scope,$html_el] );    
             this_bindedElementsHandlers.jsChangeHandler = this_o_handler;          
-            if(to_triger_now) handler(scope, $html_el);//init load
+            //if(to_trigger_now) handler(scope, $html_el);//init load
+            if(to_trigger_now){//init load
+                if(is_controller){
+                    initFuncs.push({ handler: handler, args: [scope, $html_el]});
+                }else{
+                    handler(scope, $html_el)
+                }
+            } 
         }   
    }
 
@@ -138,13 +156,13 @@
                 //remove handlers from browser
                 for(var o_i in bindedElementsHandlers[this_bind_id].observeHandlers){
                     var obs_h = bindedElementsHandlers[this_bind_id].observeHandlers[o_i];                   
-                    Object.unobserve(scope, obs_h);
+                    unobserveHandler(scope, obs_h);
                 }
                 for(var o_type in bindedElementsHandlers[this_bind_id].ons){
                    $html_el.off(o_type);
                 }
                 if(bindedElementsHandlers[this_bind_id].jsChangeHandler){                    
-                    Object.unobserve(scope, bindedElementsHandlers[this_bind_id].jsChangeHandler);                          
+                    unobserveHandler(scope, bindedElementsHandlers[this_bind_id].jsChangeHandler);                          
                 }
             }        
             bindedElementsHandlers[this_bind_id] = {
@@ -183,7 +201,7 @@
                         }                    
                     }                        
                     bindedElementsHandlers[this_bind_id].observeHandlers.push(this_observe_hanlder)
-                    Object.observe(scope, this_observe_hanlder);
+                    observeHandler(scope, this_observe_hanlder);
                 }
 
                 //html change -> js   (if not -> only read from js)                
@@ -193,7 +211,7 @@
                 }                 
             })
             // JS change -> JS (function)
-            bindTrigers(scope, $html_el, bindedElementsHandlers[this_bind_id])
+            bindTriggers(scope, $html_el, bindedElementsHandlers[this_bind_id])
 
             //onclick
             bindOns(scope, $html_el, bindedElementsHandlers[this_bind_id])         
@@ -226,7 +244,7 @@
 
     function fill(args){      
         $(args.el).attr(attr_pfx+'models',args.models);
-        $(args.el).attr(attr_pfx+'trigers',args.trigers);
+        $(args.el).attr(attr_pfx+'triggers',args.triggers);
         $(args.el).attr(attr_pfx+'handler',args.handler);
         // bind this ell
         return bindOne(args.scope, args.el);
@@ -247,11 +265,20 @@
         }        
     }
 
-    function controller(controller_name, contr_func){
+    function controller(controller_name, contr_func){       
         var topEl = $('['+attr_pfx+'controller="'+controller_name+'"]');
-        if(topEl.length){            
+        
+        if(topEl.length){
+            is_controller = true;            
             var scope = contr_func({});
-            bindHtml(scope,topEl);
+            var binded_ids = bindHtml(scope,topEl);
+            for(var i in initFuncs){
+                initFuncs[i].handler.apply(null,initFuncs[i].args);
+            }
+            is_controller = false;
+            if(scope.hasOwnProperty('init')){
+                scope.init.apply(scope,[binded_ids])
+            }            
         }
     }
 
@@ -297,6 +324,7 @@
 
     return {
         attr_pfx: attr_pfx,
+        setAttrPrx: setAttrPrx,
         bindHtml: bindHtml,
         controllers: controllers,
         controller : controller,
@@ -304,6 +332,8 @@
         bindedElementsHandlers: bindedElementsHandlers,  
         bindOne: bindOne,  
         clearHandlers: clearHandlers,    
+        observeHandler: observeHandler,
+        unobserveHandler: unobserveHandler,
     }
 
 }));

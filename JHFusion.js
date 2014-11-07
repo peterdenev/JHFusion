@@ -9,15 +9,81 @@
     }
 }(this, function () {
 
-    function JHFusion(arg_options){ 
+    var jhfInstancesCount = 0;
+
+    function JHFusion(arg_options){
+
+        var instance_pfx = jhfInstancesCount++;             
 
         var cfg = {
             attr_pfx: 'data-',
+            instance_pfx : instance_pfx,
             observeHandler: Object.observe || function(){},
-            unobserveHandler: Object.unobserve || function(){},
+            unobserveHandler: Object.unobserve || function(){},      
+            //modelPatternHandler: modelPatternHandler     
         }
-        $.extend(cfg, arg_options);      
 
+        cfg.modelPatternHandler = function($html_el, model_pattern, callback){  
+            var model_bindings = (model_pattern || '').split(';');  
+            for(var b_i in model_bindings){
+                var attr_var = model_bindings[b_i].trim().split(' ').map(function(el){
+                    return el.trim();
+                }).filter(function(el){
+                    return el!='';
+                });      
+                if(attr_var.length==1){
+                    attr_var.push('<<>')
+                    attr_var.push(attr_var[0])
+                    attr_var[0] = 'val'
+                }
+
+                if(attr_var.length>2 && attr_var[2]!=''){                    
+                    var html_ons_attr = attr_var[0].split(':').map(function(el){
+                        return el.trim();
+                    });
+                    if(html_ons_attr.length==1){
+                        html_ons_attr.push(html_ons_attr[0])
+                        html_ons_attr[0] = 'change'
+                    }
+                    var ons = html_ons_attr[0].split(',').map(function(el){
+                        return el.trim();
+                    });
+
+
+                    var to_html_count = (attr_var[1].match(/</g) || []).length;
+                    var to_js_count = (attr_var[1].match(/>/g) || []).length;        
+                    var initCopyTo = (to_html_count==2) ? 'html' : (to_js_count==2) ? 'js' : null;
+                    callback(
+                        (function($html_el,attr_var){
+                            var reserved = ['val','html','text'];
+                            return {
+                                varName: attr_var[2],
+                                canRead: to_html_count>0,
+                                canWrite: to_js_count>0,
+                                initCopyTo: initCopyTo,
+                                ons: ons,
+                                valueFromHTML: function(){
+                                    if(reserved.indexOf(html_ons_attr[1])!=-1){
+                                        return $html_el[html_ons_attr[1]]();
+                                    }                                
+                                    return $html_el.attr(html_ons_attr[1]);
+                                },
+                                valueToHTML: function(value){
+                                    if(reserved.indexOf(html_ons_attr[1])!=-1){
+                                        return $html_el[html_ons_attr[1]](value);
+                                    }else{
+                                        $html_el.attr(html_ons_attr[1],value);
+                                    }
+                                }
+                            }
+                        })($html_el,attr_var) 
+                    )
+                }
+            }
+        }
+        //merge with user options
+        $.extend(cfg, arg_options);     
+    
         var last_bind_id = 0;
 
         var bindedElementsHandlers = {
@@ -47,51 +113,7 @@
             return this_o_handler;
         }
 
-        var defaultModelPatternHandler = function($html_el, model_pattern, callback){  
-            var model_bindings = (model_pattern || '').split(',');  
-            for(var b_i in model_bindings){
-                var attr_var = model_bindings[b_i].trim().split(' ').map(function(el){
-                    return el.trim();
-                }).filter(function(el){
-                    return el!='';
-                });      
-                if(attr_var.length==1){
-                    attr_var.push('<<>')
-                    attr_var.push(attr_var[0])
-                    attr_var[0] = 'val'
-                }
-
-                if(attr_var.length>2 && attr_var[2]!=''){
-                    var to_html_count = (attr_var[1].match(/</g) || []).length;
-                    var to_js_count = (attr_var[1].match(/>/g) || []).length;        
-                    var initCopyTo = (to_html_count==2) ? 'html' : (to_js_count==2) ? 'js' : null;
-                    callback(
-                        (function($html_el,attr_var){
-                            var reserved = ['val','html','text'];
-                            return {
-                                varName: attr_var[2],
-                                canRead: to_html_count>0,
-                                canWrite: to_js_count>0,
-                                initCopyTo: initCopyTo,
-                                valueFromHTML: function(){
-                                    if(reserved.indexOf(attr_var[0])!=-1){
-                                        return $html_el[attr_var[0]]();
-                                    }                                
-                                    return $html_el.attr(attr_var[0]);
-                                },
-                                valueToHTML: function(value){
-                                    if(reserved.indexOf(attr_var[0])!=-1){
-                                        return $html_el[attr_var[0]](value);
-                                    }else{
-                                        $html_el.attr(attr_var[0],value);
-                                    }
-                                }
-                            }
-                        })($html_el,attr_var) 
-                    )
-                }
-            }
-       }
+        
 
        var bindTriggers = function(scope, $html_el, this_bindedElementsHandlers){
             // JS change -> JS (function)
@@ -121,7 +143,7 @@
             }   
        }
 
-       var bindOns = function(scope, $html_el, this_bindedElementsHandlers){
+       var bindTriggerOns = function(scope, $html_el, this_bindedElementsHandlers){
             $html_el.each(function() {
                 $.each(this.attributes, function() {                   
                     if(this.specified) {                                  
@@ -148,12 +170,11 @@
             }); 
         }
 
-        this.bindOne = function(scope, $html_el, overwrite, modelPatternHandler){  
-            modelPatternHandler = typeof modelPatternHandler !=='undefined' ? modelPatternHandler : defaultModelPatternHandler;   
+        this.bindOne = function(scope, $html_el, overwrite){ 
             var this_bind_id = $html_el.attr(cfg.attr_pfx+'bind-id');
             if(typeof this_bind_id == 'undefined' || overwrite){
                 if(typeof this_bind_id == 'undefined'){
-                    this_bind_id = last_bind_id++;
+                    this_bind_id = cfg.instance_pfx+"_"+last_bind_id++;
                     $html_el.attr(cfg.attr_pfx+'bind-id',this_bind_id)
                 }
                 if(overwrite && bindedElementsHandlers.hasOwnProperty(this_bind_id)){
@@ -170,7 +191,7 @@
                     jsChangeHandler : undefined                 
                 }        
            
-                modelPatternHandler($html_el, $html_el.attr(cfg.attr_pfx+'models'), function(this_mb_handeler){
+                cfg.modelPatternHandler($html_el, $html_el.attr(cfg.attr_pfx+'models'), function(this_mb_handeler){
 
                     var this_onchange_handler = function(){
                         setScopedValue(
@@ -201,16 +222,22 @@
                     }
 
                     //html change -> js   (if not -> only read from js)                
-                    if(this_mb_handeler.canWrite){
-                        bindedElementsHandlers[this_bind_id].ons.change.push(this_onchange_handler)
-                        $html_el.on('change',this_onchange_handler); 
+                    if(this_mb_handeler.canWrite){                       
+                        for(var on_i in this_mb_handeler.ons){
+                            var this_on = this_mb_handeler.ons[on_i];
+                            if(!bindedElementsHandlers[this_bind_id].ons.hasOwnProperty(this_on)){
+                                bindedElementsHandlers[this_bind_id].ons[this_on] = [];
+                            }
+                            bindedElementsHandlers[this_bind_id].ons[this_on].push(this_onchange_handler)
+                            $html_el.on(this_on,this_onchange_handler);
+                        } 
                     }                 
                 })
                 // JS change -> JS (function)
                 bindTriggers(scope, $html_el, bindedElementsHandlers[this_bind_id])
 
                 //onclick
-                bindOns(scope, $html_el, bindedElementsHandlers[this_bind_id])         
+                bindTriggerOns(scope, $html_el, bindedElementsHandlers[this_bind_id])         
             }
             return this_bind_id;         
         }
@@ -228,13 +255,13 @@
         }*/
 
         //nested 
-        this.bindHtml = function(scope, topHtmlEl, overwrite, modelPatternHandler){        
+        this.bindHtml = function(scope, topHtmlEl, overwrite){        
             overwrite = typeof overwrite !=='undefined' ? overwrite : true;        
             topHtmlEl = typeof topHtmlEl !=='undefined' ? topHtmlEl : $('body'); 
             var bind_ids = [];   
             var that = this;    
             $(topHtmlEl).find('['+cfg.attr_pfx+'models]').each(function(){            
-                bind_ids.push(that.bindOne(scope, $(this), overwrite, modelPatternHandler))   
+                bind_ids.push(that.bindOne(scope, $(this), overwrite))   
             });
             return bind_ids;
         }

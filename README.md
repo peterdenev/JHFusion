@@ -38,10 +38,17 @@ data-on...
 
 # Methods:
 ----------
+
 bindOne(scope, htmlEl)
+
 bindHTML(scope, topLevelHtmlEl, overwrite)
+
 ...
 
 
-NOTE! require Object.observe (for now :)) 
+NOTE! require Object.observe
+Options:
+- use Chrome :)
+- implement your Object.observe as set it using JHFusion.observeHandler
+- use a polyfill like https://github.com/jdarling/Object.observe
 

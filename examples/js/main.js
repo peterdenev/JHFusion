@@ -1,5 +1,4 @@
-
-
+var JHF = new JHFusion();
 
 function init(){
 	//debugger;
@@ -8,9 +7,9 @@ function init(){
     scope.todos = ['one', 'two','three']
 
 	scope.listTodos = function(scope, target){
-        JHFusion.clearHandlers(scope.tasks_ids);		
+        JHF.clearHandlers(scope.tasks_ids);		
         $(target).html(TemplateEngine(document.querySelector('#tmpl_1').innerHTML,scope.todos))   
-        scope.tasks_ids = JHFusion.bindHtml(scope, target);
+        scope.tasks_ids = JHF.bindHtml(scope, target);
     }
 
     scope.delEl = function(el_id){       
@@ -27,9 +26,9 @@ function init(){
         return scope;
     }
 
-    JHFusion.bindOne(scope,$('#new_task_in'));
-    JHFusion.bindOne(scope,$('#todo_ul'));
-    JHFusion.bindOne(scope,$('#add_task_btn'));
+    JHF.bindOne(scope,$('#new_task_in'));
+    JHF.bindOne(scope,$('#todo_ul'));
+    JHF.bindOne(scope,$('#add_task_btn'));
 
 }
 

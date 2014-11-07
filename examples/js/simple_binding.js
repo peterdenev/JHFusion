@@ -1,3 +1,5 @@
+var JHF = new JHFusion();
+
 var varsHub = {
 	synch_var: 'aa',
 	msg: '',	
@@ -11,22 +13,22 @@ var varsHub = {
 	}
 };
 
-JHFusion.bindOne( varsHub, $('#input_el_1') );
-JHFusion.bindOne( varsHub, $('#input_el_2') );
-JHFusion.bindOne( varsHub, $('#input_el_3') );
-JHFusion.bindOne( varsHub, $('#input_el_4') );
-JHFusion.bindOne( varsHub, $('#input_el_5') );
+JHF.bindOne( varsHub, $('#input_el_1') );
+JHF.bindOne( varsHub, $('#input_el_2') );
+JHF.bindOne( varsHub, $('#input_el_3') );
+JHF.bindOne( varsHub, $('#input_el_4') );
+JHF.bindOne( varsHub, $('#input_el_5') );
 
-JHFusion.bindOne( varsHub, $('#input_el_6') );
-JHFusion.bindOne( varsHub, $('#alertBox') );
+JHF.bindOne( varsHub, $('#input_el_6') );
+JHF.bindOne( varsHub, $('#alertBox') );
 
-JHFusion.bindOne( varsHub, $('#alertBox_auto') );
+JHF.bindOne( varsHub, $('#alertBox_auto') );
 
-JHFusion.bindOne( varsHub, $('#input_el_11') );
-JHFusion.bindOne( varsHub, $('#input_el_12') );
+JHF.bindOne( varsHub, $('#input_el_11') );
+JHF.bindOne( varsHub, $('#input_el_12') );
 
 
-JHFusion.fill({
+JHF.fill({
  	scope: varsHub, 
  	el: $('#autoGenerate_binding'),
  	models: 'val <<> synch_var'

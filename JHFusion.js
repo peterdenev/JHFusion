@@ -158,9 +158,10 @@
                 }
                 if(overwrite && bindedElementsHandlers.hasOwnProperty(this_bind_id)){
                     //remove handlers from browser
-                    clearHandlers(this_bind_id);
+                    this.clearHandlers(this_bind_id);
                 }        
                 bindedElementsHandlers[this_bind_id] = {
+                    scope: scope,
                     ref_el: $html_el,                
                     observeHandlers: [],                
                     ons: {
@@ -278,7 +279,7 @@
             }
         }
 
-        var clearHandlers = function(list_ids){
+        this.clearHandlers = function(list_ids){
             if(['number','string'].indexOf(list_ids) != -1){
                 list_ids = [list_ids]
             }    
@@ -286,6 +287,8 @@
                 for(var l_i in list_ids){
                     var this_bind_id = list_ids[l_i];
                     //remove handlers from browser
+                    var scope = bindedElementsHandlers[this_bind_id].scope;
+                    var $html_el = bindedElementsHandlers[this_bind_id].ref_el;
                     for(var o_i in bindedElementsHandlers[this_bind_id].observeHandlers){
                         var obs_h = bindedElementsHandlers[this_bind_id].observeHandlers[o_i];                   
                         cfg.unobserveHandler(scope, obs_h);
@@ -331,19 +334,6 @@
         }
 
     }
-
-    /*return {        
-        setAttrPrx: setAttrPrx,
-        bindHtml: bindHtml,
-        controllers: controllers,
-        controller : controller,
-        fill: fill,
-        bindedElementsHandlers: bindedElementsHandlers,  
-        bindOne: bindOne,  
-        clearHandlers: clearHandlers,    
-        observeHandler: observeHandler,
-        unobserveHandler: unobserveHandler,
-    }*/
 
     return JHFusion
 

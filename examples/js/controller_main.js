@@ -1,12 +1,13 @@
+var JHF = new JHFusion();
 
-JHFusion.controller('TodoController',function(scope){
+JHF.controller('TodoController',function(scope){
 
     scope.todos = ['one', 'two','three']
 
 	scope.listTodos = function(scope, target){
-        JHFusion.clearHandlers(scope.tasks_ids);		
+        JHF.clearHandlers(scope.tasks_ids);		
         $(target).html(TemplateEngine(document.querySelector('#tmpl_1').innerHTML,scope.todos))   
-        scope.tasks_ids = JHFusion.bindHtml(scope, target);
+        scope.tasks_ids = JHF.bindHtml(scope, target);
     }   
 
     scope.delEl = function(el_id){       

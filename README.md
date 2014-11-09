@@ -14,20 +14,15 @@ value &lt; myVar
 value &lt;> myVar
 value &lt;&lt;> myVar
 value &lt;>> myVar
+change, keyup: value &lt;&lt;> myVar; blur: ref < refContent
+
+default:
+param
+same as:
+change: value <<> param
 
 title << savedTitleValue
 
-
-## data-trigers
-! or scopedVarName
-
-!
-myVar
-myVar, savedTitleValue
-!, myVar
-
-## data-handler
-scoped function name
 
 ## data-on***
 data-onclick

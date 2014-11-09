@@ -54,7 +54,7 @@ JHF.bindOne( varsHub, $('#input_el_13') );
 JHF.fill({
  	scope: varsHub, 
  	el: $('#autoGenerate_binding'),
- 	models: 'val <<> synch_var'
+ 	map: 'val <<> synch_var'
 })
 
 
@@ -66,22 +66,24 @@ JHF.controller('MailboxController',function(scope){
 	scope={
 		"name": "Alice",
   		"unread": 7,
-  		"total": 10, 	
-  		/*_complex: {
+  		"total": 10, 
+
+  		_complex: {
   			'mixed':[
-  				['name','last'], function(){					
-					return scope.name+" "+scope.last;			
+  				['!','name','last'], function(){					
+					return scope.name+" : "+scope.unread+"/"+scope.total;			
 				}
   			]
-  		} */		
+  		} 	
 	}
 
 
-	JHF.complex(scope,'greet',['name'],function(){		
-		return 'Hi, '+scope.name;			
+	JHF.complex(scope,'greet',['!','name'],function(){		
+		return 'Hi, '+scope.name;
 	})
 
-	JHF.complex(scope,'progStyle',['total','unread'],function(){		
+	
+	JHF.complex(scope,'progStyle',['!','total','unread'],function(){		
 		return 'width: '+(100 * scope.unread / scope.total)+'%;'		
 	})
 

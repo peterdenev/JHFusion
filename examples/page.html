@@ -8,18 +8,16 @@
 <body>
 	
 		
-	<input type="text" id="new_task_in" data-models="val > new_todo_text" />
+	<input type="text" id="new_task_in" data-map="val > new_todo_text" />
 	<input type="button" id="add_task_btn" value="add task" data-onclick="addItem"  />
 
-	<ul id="todo_ul" data-triggers="!, todos" data-handler="listTodos">	
-
-	</ul>
+	<ul id="todo_ul"></ul>
 
 	<script id="tmpl_1" type="text/themplate">
 		<%for(var key in this){%>
 			<li>
-				<input type="text" data-models="todos.<%key%>" value="<%this[key]%>" />	
-				<input type="button" data-models="" data-onclick="delEl(<%key%>)" value="delete" />
+				<input type="text" data-map="todos.<%key%>" value="<%this[key]%>" />	
+				<input type="button" data-map="" data-onclick="delEl(<%key%>)" value="delete" />
 			</li>
 		<%}%>			
 	</script>

@@ -4,13 +4,14 @@ JHF.controller('TodoController',function(scope){
 
     scope.todos = ['one', 'two','three']
 
-	scope.listTodos = function(scope, target){
-        JHF.clearHandlers(scope.tasks_ids);		
+	JHF.complex(scope, null, ['!','todos'],function(){
+        var target = $('#todo_ul');
+        JHF.clearHandlers(scope.tasks_ids);
         $(target).html(TemplateEngine(document.querySelector('#tmpl_1').innerHTML,scope.todos))   
         scope.tasks_ids = JHF.bindHtml(scope, target);
-    }   
+    })
 
-    scope.delEl = function(el_id){       
+    scope.delEl = function(el_id){             
         scope.todos = scope.todos.filter(function(el,i){
             return i!=el_id
         })

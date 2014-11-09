@@ -17,46 +17,46 @@
 	<div id="main">
 		
 		Write only:
-		<input type="text" id="input_el_1" data-models="val > synch_var" />
+		<input type="text" id="input_el_1" data-map="val > synch_var" />
 		<br>
 
 		Read only:
-		<input type="text" id="input_el_2" data-models="val < synch_var" />
+		<input type="text" id="input_el_2" data-map="val < synch_var" />
 		<br>
 
 		Read and Write:
-		<input type="text" id="input_el_3" data-models="keydown,change:val <> synch_var" />
+		<input type="text" id="input_el_3" data-map="keydown,change:val <> synch_var" />
 		<br>
 
 		Read and Write + init to html:
-		<input type="text" id="input_el_4" data-models="val <<> synch_var" />
+		<input type="text" id="input_el_4" data-map="val <<> synch_var" />
 		<!-- same as -->
-		<!-- <input type="text" id="input_el_4" data-models="synch_var" /> -->
+		<!-- <input type="text" id="input_el_4" data-map="synch_var" /> -->
 		<br>
 
 
 		<!-- Read and Write + init to js:
-		<input type="text" id="input_el_4" data-models="val <>> synch_var" value="44" />
+		<input type="text" id="input_el_4" data-map="val <>> synch_var" value="44" />
 		 -->
 
 		<hr>
 
 
-		Write only with force init from html:
-		<input type="text" id="input_el_5" data-models="val > synch_var" data-triggers="!" data-handler="init_copy" />
+		<!-- Write only with force init from html:
+		<input type="text" id="input_el_5" data-map="val > synch_var" data-triggers="!" data-handler="init_copy" /> -->
 		<br>
 
 		<hr>		
 		
 		MSG:
-		<input type="text" id="input_el_6" data-models="val > msg" /> <br>
+		<input type="text" id="input_el_6" data-map="val > msg" /> <br>
 		Alert box with trigger:
-		<input type="text" id="alertBox" data-triggers="msg, input_1_val" data-handler="showAlert">	
-		<input type="text" id="alertBox2" data-models="alertMSG">		
+		<!-- <input type="text" id="alertBox" data-triggers="msg, input_1_val" data-handler="showAlert">	 -->
+		<input type="text" id="alertBox2" data-map="alertMSG">		
 		<br>
 
 		Alert box with trigger:
-		<input type="text" id="alertBox_auto" data-models="val < msg" >	
+		<input type="text" id="alertBox_auto" data-map="val < msg" >	
 		<br>
 
 		<hr>
@@ -65,13 +65,13 @@
 
 		<hr>
 		Attribute fill:
-		<input type="text" id="input_el_11" data-models="val <> input_1_val; title < input_2_val" />
-		<input type="text" id="input_el_12" data-models="val <> input_2_val; ref < input_2_val" />
+		<input type="text" id="input_el_11" data-map="val <> input_1_val; title < input_2_val" />
+		<input type="text" id="input_el_12" data-map="val <> input_2_val; ref < input_2_val" />
 
 
 		<hr>
 		Validator:
-		<input type="text" id="input_el_13" data-onkeyup="validateVar" data-models="keyup,change:val <> str2validate; 
+		<input type="text" id="input_el_13" data-onkeyup="validateVar" data-map="keyup,change:val <> str2validate; 
 																								title < errText; 
 																								class < validClass" />
 
@@ -92,12 +92,12 @@
 		</style>
 
 		<div data-controller="MailboxController">			
-			<h3 data-models="html << mixed" ></h3>
-			<h3 data-models="html << greet" ></h3>
-			<p>You have <b data-models="html << unread"></b>/<span data-models="html << total"></span> unread messages.</p>
+			<h3 data-map="html << mixed" ></h3>
+			<h3 data-map="html << greet" ></h3>
+			<p>You have <b data-map="html << unread"></b>/<span data-map="html << total"></span> unread messages.</p>
 
 			<div class='progress'>		  
-			   <div data-models="style << progStyle"></div>
+			   <div data-map="style << progStyle"></div>
 			</div>
 		</div>
 

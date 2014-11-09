@@ -20,10 +20,10 @@
             instance_pfx : instance_pfx,
             observeHandler: Object.observe || function(){},
             unobserveHandler: Object.unobserve || function(){},      
-            //modelPatternHandler: modelPatternHandler     
+            //mappingHandler: mappingHandler     
         }
 
-        cfg.modelPatternHandler = function($html_el, model_pattern, callback){  
+        cfg.mappingHandler = function($html_el, model_pattern, callback){  
             //  (([a-zA-Z, 0-9_-]+):)?(([a-zA-Z0-9_-]+)?([<> ]+){1})?([a-zA-Z, 0-9_-]+){1}
             var model_bindings = (model_pattern || '').split(';');  
             for(var b_i in model_bindings){
@@ -48,12 +48,12 @@
                     }
                     var ons = html_ons_attr[0].split(',').map(function(el){
                         return el.trim();
-                    });
-                    
+                    });                    
 
                     var to_html_count = (attr_var[1].match(/</g) || []).length;
                     var to_js_count = (attr_var[1].match(/>/g) || []).length;        
                     var initCopyTo = (to_html_count==2) ? 'html' : (to_js_count==2) ? 'js' : null;
+
                     callback(
                         (function($html_el,attr_var,html_ons_attr){
                             var reserved = ['val','html','text'];
@@ -88,6 +88,7 @@
         var last_bind_id = 0;
 
         var bindedElementsHandlers = {
+            complex: [],
             //'id': 'handelr'
         }
 
@@ -98,51 +99,6 @@
         this.getOptions = function(){
             return cfg;
         }              
-
-        var depObserve = function(scope, deps, renderHandler, handlerData, breakOnFirst){
-            breakOnFirst = typeof breakOnFirst !== 'undefined' ? breakOnFirst : false; 
-            var this_o_handler = function(changes){                           
-                for(var ch_i in changes) { 
-                    if(deps.indexOf(changes[ch_i].name)!== -1){
-                        renderHandler.apply(this, handlerData);
-                        if(breakOnFirst)
-                            break; // do only once per change
-                    }
-                }
-            }      
-            cfg.observeHandler(scope, this_o_handler);
-            return this_o_handler;
-        }
-
-        
-
-       var bindTriggers = function(scope, $html_el, this_bindedElementsHandlers){
-            // JS change -> JS (function)
-            var to_trigger_now = false;
-            var triggers = ($html_el.attr(cfg.attr_pfx+'triggers') || '').split(',').map(function(el){
-                return el.trim();
-            }).filter(function(el){
-                if(el=='!'){
-                    to_trigger_now = true
-                    return false;  
-                }
-                return true;
-            }) 
-            //var handler = scope[$html_el.attr(cfg.attr_pfx+'handler')];
-            var handler = getScopedValue(scope,$html_el.attr(cfg.attr_pfx+'handler') || '')
-            if(handler){//loaders...
-                var this_o_handler = depObserve( scope, triggers , handler, [scope,$html_el] );    
-                this_bindedElementsHandlers.jsChangeHandler = this_o_handler;          
-                //if(to_trigger_now) handler(scope, $html_el);//init load
-                if(to_trigger_now){//init load
-                    if(is_controller){
-                        initFuncs.push({ handler: handler, args: [scope, $html_el]});
-                    }else{
-                        handler(scope, $html_el)
-                    }
-                } 
-            }   
-       }
 
        var bindTriggerOns = function(scope, $html_el, this_bindedElementsHandlers){
             $html_el.each(function() {
@@ -190,11 +146,10 @@
                     observeHandlers: [],                
                     ons: {
                         change:[]
-                    },
-                    jsChangeHandler : undefined                 
+                    },                                   
                 }        
            
-                cfg.modelPatternHandler($html_el, $html_el.attr(cfg.attr_pfx+'models'), function(this_mb_handeler){
+                cfg.mappingHandler($html_el, $html_el.attr(cfg.attr_pfx+'map'), function(this_mb_handeler){
 
                     var this_onchange_handler = function(){
                         setScopedValue(
@@ -209,10 +164,7 @@
                             scopedVar = scopedVar.apply(this,[])
                         }
                         this_mb_handeler.valueToHTML(scopedVar);
-                    }
-
-                    //complex property (function)
-                    //if(typeof getScopedValue(scope,this_mb_handeler.varName))                   
+                    }                           
 
                     //init copy
                     switch(this_mb_handeler.initCopyTo){
@@ -244,9 +196,7 @@
                             $html_el.on(this_on,this_onchange_handler);
                         } 
                     }                 
-                })
-                // JS change -> JS (function)
-                bindTriggers(scope, $html_el, bindedElementsHandlers[this_bind_id])
+                })              
 
                 //onclick
                 bindTriggerOns(scope, $html_el, bindedElementsHandlers[this_bind_id])         
@@ -272,7 +222,7 @@
             topHtmlEl = typeof topHtmlEl !=='undefined' ? topHtmlEl : $('body'); 
             var bind_ids = [];   
             var that = this;    
-            $(topHtmlEl).find('['+cfg.attr_pfx+'models]').each(function(){            
+            $(topHtmlEl).find('['+cfg.attr_pfx+'map]').each(function(){            
                 bind_ids.push(that.bindOne(scope, $(this), overwrite))   
             });
             return bind_ids;
@@ -280,7 +230,7 @@
 
         this.complex = function(scope, targetVar, deps, renderHandler, handlerData, breakOnFirst){
             breakOnFirst = typeof breakOnFirst !== 'undefined' ? breakOnFirst : false; 
-            var setVar = function(){
+            var setVar = function(){ /*scope,handlerData,targetVar*/
                 var rez = renderHandler.apply(scope, handlerData)
                 if(targetVar) setScopedValue(targetVar,rez,scope)                
             }
@@ -293,16 +243,28 @@
                     }
                 }
             }
+            //save handler ref            
+            bindedElementsHandlers.complex.push({
+                scope: scope,
+                varName: targetVar,
+                deps: deps,
+                handler: this_o_handler
+            })
+
             cfg.observeHandler(scope, this_o_handler);
-            setVar();
-            return this_o_handler; // << todo: and what ??
+            if(deps.indexOf('!')!=-1){
+                if(is_controller){                    
+                    initFuncs.push({ handler: setVar, args: []});
+                }else{
+                    setVar();
+                }
+            } 
+            //return setVar; 
         }
         
 
         this.fill = function(args){      
-            $(args.el).attr(cfg.attr_pfx+'models',args.models);
-            $(args.el).attr(cfg.attr_pfx+'triggers',args.triggers);
-            $(args.el).attr(cfg.attr_pfx+'handler',args.handler);
+            $(args.el).attr(cfg.attr_pfx+'map',args.map);           
             // bind this ell
             return this.bindOne(args.scope, args.el);
         }
@@ -328,6 +290,12 @@
             if(topEl.length){
                 is_controller = true;                               
                 var scope = contr_func({});
+                if(scope.hasOwnProperty('_complex')){
+                    for(var varName in scope._complex){
+                        var this_complex = scope._complex[varName];
+                        this.complex(scope, varName, this_complex[0], this_complex[1], this_complex[2], this_complex[3])
+                    }
+                }                
                 var binded_ids = this.bindHtml(scope,topEl);
                 for(var i in initFuncs){
                     initFuncs[i].handler.apply(null,initFuncs[i].args);
@@ -355,12 +323,13 @@
                     }
                     for(var o_type in bindedElementsHandlers[this_bind_id].ons){
                        $html_el.off(o_type);
-                    }
-                    if(bindedElementsHandlers[this_bind_id].jsChangeHandler){                    
-                        cfg.unobserveHandler(scope, bindedElementsHandlers[this_bind_id].jsChangeHandler);                          
-                    }
+                    }                    
                     delete bindedElementsHandlers[this_bind_id]
                 }
+                /*for(var c_i in bindedElementsHandlers.complex){   
+                    var this_complex = bindedElementsHandlers.complex[c_i];
+                    cfg.unobserveHandler(this_complex.scope, this_complex.handler);                          
+                }*/
             }   
         }
 

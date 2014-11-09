@@ -9,18 +9,16 @@
 	<div data-controller="TodoController" >		
 		
 		
-		<input type="text" id="new_task_in" data-models="val > new_todo_text" />
-		<input type="button" id="add_task_btn" data-models="" value="add task" data-onclick="addItem"  />
+		<input type="text" id="new_task_in" data-map="val > new_todo_text" />
+		<input type="button" id="add_task_btn" data-map="" value="add task" data-onclick="addItem"  />
 
-		<ul id="todo_ul" data-models="" data-triggers="!, todos" data-handler="listTodos">	
-
-		</ul>
+		<ul id="todo_ul"></ul>
 
 		<script id="tmpl_1" type="text/themplate">
 			<%for(var i in this){%>
 				<li>
-					<input type="text" data-models="todos.<%i%>" value="<%this[i]%>" data-onkeydown="down"/>	
-					<input type="button" data-models="" data-onclick="delEl(<%i%>)" value="delete" />
+					<input type="text" data-map="todos.<%i%>" value="<%this[i]%>" data-onkeydown="down"/>	
+					<input type="button" data-map="" data-onclick="delEl(<%i%>)" value="delete" />
 				</li>
 			<%}%>			
 		</script>		

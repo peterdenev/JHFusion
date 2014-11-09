@@ -3,7 +3,14 @@
 	<title>Simple Binding</title>
 	<script src="js/libs/jquery-1.8.2.min.js"></script>
 	<script src="js/libs/Object.observe.poly.js"></script>
-	
+	<style>
+		.error{
+			border:1px solid red;
+		}
+		.ok{
+			border: 1px solid skyblue;
+		}
+	</style>
 	
 </head>
 <body>
@@ -45,6 +52,7 @@
 		<input type="text" id="input_el_6" data-models="val > msg" /> <br>
 		Alert box with trigger:
 		<input type="text" id="alertBox" data-triggers="msg, input_1_val" data-handler="showAlert">	
+		<input type="text" id="alertBox2" data-models="alertMSG">		
 		<br>
 
 		Alert box with trigger:
@@ -61,6 +69,37 @@
 		<input type="text" id="input_el_12" data-models="val <> input_2_val; ref < input_2_val" />
 
 
+		<hr>
+		Validator:
+		<input type="text" id="input_el_13" data-onkeyup="validateVar" data-models="keyup,change:val <> str2validate; 
+																								title < errText; 
+																								class < validClass" />
+
+		<hr>
+
+		<style>
+		.progress{
+			position: relative;
+			width: 100%;
+			height: 1em;
+			background-color: #ddd;
+		}
+		.progress div {
+			background-color: #555;
+			height: 100%;
+			transition: width 0.1s ease-out;
+		}
+		</style>
+
+		<div data-controller="MailboxController">			
+			<h3 data-models="html << mixed" ></h3>
+			<h3 data-models="html << greet" ></h3>
+			<p>You have <b data-models="html << unread"></b>/<span data-models="html << total"></span> unread messages.</p>
+
+			<div class='progress'>		  
+			   <div data-models="style << progStyle"></div>
+			</div>
+		</div>
 
 
 	</div>

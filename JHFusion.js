@@ -24,6 +24,7 @@
         }
 
         cfg.modelPatternHandler = function($html_el, model_pattern, callback){  
+            //  (([a-zA-Z, 0-9_-]+):)?(([a-zA-Z0-9_-]+)?([<> ]+){1})?([a-zA-Z, 0-9_-]+){1}
             var model_bindings = (model_pattern || '').split(';');  
             for(var b_i in model_bindings){
                 var attr_var = model_bindings[b_i].trim().split(' ').map(function(el){
@@ -48,13 +49,13 @@
                     var ons = html_ons_attr[0].split(',').map(function(el){
                         return el.trim();
                     });
-
+                    
 
                     var to_html_count = (attr_var[1].match(/</g) || []).length;
                     var to_js_count = (attr_var[1].match(/>/g) || []).length;        
                     var initCopyTo = (to_html_count==2) ? 'html' : (to_js_count==2) ? 'js' : null;
                     callback(
-                        (function($html_el,attr_var){
+                        (function($html_el,attr_var,html_ons_attr){
                             var reserved = ['val','html','text'];
                             return {
                                 varName: attr_var[2],
@@ -76,7 +77,7 @@
                                     }
                                 }
                             }
-                        })($html_el,attr_var) 
+                        })($html_el,attr_var,html_ons_attr) 
                     )
                 }
             }
@@ -152,7 +153,8 @@
                             var onFnArgs = [];
                             if(on_func_parts.length>1){
                                 onFnArgs = on_func_parts[1].split(')')[0].trim().split(',').map(function(el){
-                                    return el.trim();
+                                    el = el.trim();                                    
+                                    return el=='this' ? $html_el : el;
                                 });
                             } 
                             var on_type = this.name.substr((cfg.attr_pfx+"on").length)
@@ -160,7 +162,8 @@
                                 this_bindedElementsHandlers.ons[on_type] = []
                             }
                             var this_on_handler = function(){
-                                getScopedValue(scope, on_func_parts[0].trim()).apply(this, onFnArgs)
+                                var that = {scope:scope, on:this.name}
+                                getScopedValue(scope, on_func_parts[0].trim()).apply(that, onFnArgs)
                             }
                             this_bindedElementsHandlers.ons[on_type].push(this_on_handler)                   
                             $html_el.on(on_type, this_on_handler)                          
@@ -201,11 +204,20 @@
                         ) 
                     } 
 
+                    var setToHTML = function(scopedVar){
+                        if(typeof scopedVar == 'function'){
+                            scopedVar = scopedVar.apply(this,[])
+                        }
+                        this_mb_handeler.valueToHTML(scopedVar);
+                    }
+
+                    //complex property (function)
+                    //if(typeof getScopedValue(scope,this_mb_handeler.varName))                   
+
                     //init copy
                     switch(this_mb_handeler.initCopyTo){
                         case 'js': this_onchange_handler(); break;
-                        case 'html': this_mb_handeler.valueToHTML(
-                            getScopedValue(scope,this_mb_handeler.varName)); break;
+                        case 'html': setToHTML(getScopedValue(scope,this_mb_handeler.varName)); break;
                     }            
                
                     //js change -> html (if not -> only read from html) 
@@ -213,7 +225,7 @@
                         var this_observe_hanlder =  function(changes){  //<< this in bind handelrs hub
                             for(var ch_i in changes) {
                                 if(changes[ch_i].name==this_mb_handeler.varName){
-                                    this_mb_handeler.valueToHTML(getScopedValue(scope,this_mb_handeler.varName));
+                                    setToHTML(getScopedValue(scope,this_mb_handeler.varName));
                                 }
                             }                    
                         }                        
@@ -266,6 +278,27 @@
             return bind_ids;
         }
 
+        this.complex = function(scope, targetVar, deps, renderHandler, handlerData, breakOnFirst){
+            breakOnFirst = typeof breakOnFirst !== 'undefined' ? breakOnFirst : false; 
+            var setVar = function(){
+                var rez = renderHandler.apply(scope, handlerData)
+                if(targetVar) setScopedValue(targetVar,rez,scope)                
+            }
+            var this_o_handler = function(changes){                           
+                for(var ch_i in changes) { 
+                    if(deps.indexOf(changes[ch_i].name)!== -1){
+                        setVar()                      
+                        if(breakOnFirst)
+                            break; // do only once per change
+                    }
+                }
+            }
+            cfg.observeHandler(scope, this_o_handler);
+            setVar();
+            return this_o_handler; // << todo: and what ??
+        }
+        
+
         this.fill = function(args){      
             $(args.el).attr(cfg.attr_pfx+'models',args.models);
             $(args.el).attr(cfg.attr_pfx+'triggers',args.triggers);
@@ -293,7 +326,7 @@
             var topEl = $('['+cfg.attr_pfx+'controller="'+controller_name+'"]');
             
             if(topEl.length){
-                is_controller = true;            
+                is_controller = true;                               
                 var scope = contr_func({});
                 var binded_ids = this.bindHtml(scope,topEl);
                 for(var i in initFuncs){
